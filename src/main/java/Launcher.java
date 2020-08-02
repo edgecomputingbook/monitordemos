@@ -45,8 +45,6 @@ public class Launcher {
 
             Benchmark benchmark = new Benchmark();
 
-
-
             while (true) {
                 benchmark.bench();
                 Thread.sleep(5000);
@@ -62,11 +60,27 @@ public class Launcher {
 
         try {
 
-            SysInfoBuilder sysInfoBuilder = new SysInfoBuilder();
-            //System.out.println(sysInfoBuilder.getSysInfoMap());
-            for(Map<String,String> cpu : sysInfoBuilder.getCPUInfo())
-                System.out.println(cpu);
 
+            SysInfoBuilder sysInfoBuilder = new SysInfoBuilder();
+            Benchmark benchmark = new Benchmark();
+
+            int benchmarkPid = sysInfoBuilder.getBenchmarkPid();
+            System.out.println(benchmarkPid);
+            if(benchmarkPid != -1) {
+                Thread thread = new Thread(){
+                    public void run(){
+                        System.out.println("Start Monitor Thread");
+                        sysInfoBuilder.printBenchmarkMonitor(benchmarkPid);
+                    }
+                };
+                thread.start();
+
+                while (true) {
+                    Thread.sleep(15000);
+                    benchmark.bench();
+                    Thread.sleep(15000);
+                }
+            }
 
         } catch (Exception ex) {
             ex.printStackTrace();

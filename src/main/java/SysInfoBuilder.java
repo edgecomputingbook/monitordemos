@@ -8,7 +8,10 @@ import oshi.software.os.OperatingSystem;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
+import java.text.DecimalFormat;
 import java.util.*;
+
+import static jdk.nashorn.internal.objects.NativeMath.round;
 
 class SysInfoBuilder {
     private SystemInfo systemInfo;
@@ -20,7 +23,7 @@ class SysInfoBuilder {
         gson = new Gson();
         systemInfo = new SystemInfo();
         hardwareAbstractionLayer = systemInfo.getHardware();
-
+        os = systemInfo.getOperatingSystem();
     }
 
     public String getSysInfoFullMap() {
@@ -92,7 +95,7 @@ class SysInfoBuilder {
         return jsonInfo;
     }
 
-    private List<Map<String,String>> getProcessInfo() {
+    public List<Map<String,String>> getProcessInfo() {
         List<Map<String,String>> list = null;
         try{
             list = new ArrayList<>();
@@ -101,6 +104,7 @@ class SysInfoBuilder {
             for(OSProcess op : p) {
                 Map<String,String> info = new HashMap<>();
                 info.put("name",op.getName());
+
                 //info.put("commandline",op.getCommandLine());
                 info.put("path",op.getPath());
                 info.put("bytes-read",String.valueOf(op.getBytesRead()));
@@ -109,12 +113,95 @@ class SysInfoBuilder {
                 info.put("virtual-size",String.valueOf(op.getVirtualSize()));
                 info.put("thread-count",String.valueOf(op.getThreadCount()));
                 list.add(info);
+                if(op.getCommandLine().contains("monitordemos-1.0-SNAPSHOT.jar")) {
+                    System.out.println(info);
+                    System.out.println(op.getCommandLine());
+                    //System.out.println(op.get);
+                }
             }
         }
         catch(Exception ex) {
             ex.printStackTrace();
         }
         return list;
+    }
+
+    public int getBenchmarkPid() {
+        int pid = -1;
+
+        try{
+            OSProcess[] p = os.getProcesses(0, OperatingSystem.ProcessSort.CPU);
+            for(OSProcess op : p) {
+                if(op.getCommandLine().contains("monitordemos-1.0-SNAPSHOT.jar")) {
+                    System.out.println(op.getCommandLine());
+                    pid = op.getProcessID();
+                }
+            }
+        }
+        catch(Exception ex) {
+            ex.printStackTrace();
+        }
+
+
+        return pid;
+    }
+
+    public void printBenchmarkMonitor(int pid) {
+        try {
+            //DecimalFormat df = new DecimalFormat("###.#");
+
+            //int pid = 123;
+            long currentTime = 0;
+            long previousTime = 0;
+            long timeDifference = 0;
+            OSProcess process;
+
+            //SystemInfo si = new SystemInfo();
+            //OperatingSystem os = si.getOperatingSystem();
+            CentralProcessor processor = hardwareAbstractionLayer.getProcessor();
+            int cpuNumber = processor.getLogicalProcessorCount();
+            boolean processExists = true;
+            long[][] longs = hardwareAbstractionLayer.getProcessor().getProcessorCpuLoadTicks();
+            while (processExists) {
+                process = os.getProcess(pid);
+                if (process != null) {
+                    // CPU
+                    currentTime = process.getKernelTime() + process.getUserTime();
+
+                    if (previousTime != -1) {
+                        // If we have both a previous and a current time
+                        // we can calculate the CPU usage
+                        timeDifference = currentTime - previousTime;
+                        double singleCPU = 100d * (timeDifference / ((double) 1000));
+                        double totalCPU = singleCPU / cpuNumber;
+                        System.out.println("Benchmark Total CPU: " + (int)totalCPU + "%");
+                        System.out.println("Benchmark Single CPU: " + (int)singleCPU + "%");
+                        //System.out.println("Benchmark Bytes-read: " + process.getBytesRead());
+                        //System.out.println("Benchmark Bytes-written: " + process.getBytesWritten());
+
+                        //long[][] longs = hardwareAbstractionLayer.getProcessor().getProcessorCpuLoadTicks();
+                        double[] d = hardwareAbstractionLayer.getProcessor().getProcessorCpuLoadBetweenTicks(longs);
+
+                        int coreCount = 0;
+                        System.out.print("Logical Core Utilization: ");
+                        for (double l1 : d) {
+                            System.out.print("c" + coreCount + "[" + (int)(l1 * 100) + "]" + "% ");
+                            coreCount++;
+                        }
+                        System.out.println("\n");
+                    }
+
+                    previousTime = currentTime;
+                    longs = hardwareAbstractionLayer.getProcessor().getProcessorCpuLoadTicks();
+                    Thread.sleep(1000);
+                } else {
+                    processExists = false;
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
     }
 
     private List<Map<String,String>> getFSInfo() {

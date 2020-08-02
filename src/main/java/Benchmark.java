@@ -63,11 +63,21 @@ public class Benchmark {
         try {
             long startTime = System.currentTimeMillis();
             double var1 = 2.0D;
+
             int var3 = 1024;
             short var4 = 100;
             int var5 = 1000;
             int var6 = 5000;
             short var7 = 100;
+
+
+            /*
+            int var3 = 1048576;
+            short var4 = 1000;
+            int var5 = 100000;
+            int var6 = 1000000;
+            short var7 = 1000;
+            */
 
             double[] var10 = new double[6];
             Random var9 = new Random(101010);
