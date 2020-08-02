@@ -1,10 +1,9 @@
+import java.util.Map;
+
 public class Launcher {
 
     public static void main(String[] args) {
 
-
-        Benchmark benchmark = new Benchmark();
-        benchmark.bench();
 
         try {
 
@@ -25,7 +24,7 @@ public class Launcher {
                         benchmarkDemo();
                         break;
                     case "monitor":
-                        System.out.println("Mintor Demo:");
+                        System.out.println("Monitor Demo:");
                         monitorDemo();
                         break;
                     default:
@@ -44,10 +43,13 @@ public class Launcher {
 
         try {
 
+            Benchmark benchmark = new Benchmark();
+
 
 
             while (true) {
-
+                benchmark.bench();
+                Thread.sleep(5000);
             }
 
         } catch (Exception ex) {
@@ -60,11 +62,11 @@ public class Launcher {
 
         try {
 
+            SysInfoBuilder sysInfoBuilder = new SysInfoBuilder();
+            //System.out.println(sysInfoBuilder.getSysInfoMap());
+            for(Map<String,String> cpu : sysInfoBuilder.getCPUInfo())
+                System.out.println(cpu);
 
-
-            while (true) {
-
-            }
 
         } catch (Exception ex) {
             ex.printStackTrace();
