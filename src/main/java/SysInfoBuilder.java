@@ -1,4 +1,7 @@
 import com.google.gson.Gson;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import oshi.SystemInfo;
 import oshi.hardware.*;
 import oshi.software.os.OSFileStore;
@@ -10,6 +13,7 @@ import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static jdk.nashorn.internal.objects.NativeMath.round;
 
@@ -18,12 +22,18 @@ class SysInfoBuilder {
     private HardwareAbstractionLayer hardwareAbstractionLayer;
     private OperatingSystem os;
     private Gson gson;
+    private Timer timerc;
 
     public SysInfoBuilder() {
         gson = new Gson();
         systemInfo = new SystemInfo();
         hardwareAbstractionLayer = systemInfo.getHardware();
         os = systemInfo.getOperatingSystem();
+        MeterRegistry registry = new SimpleMeterRegistry();
+        timerc = Timer
+                .builder("my.timer")
+                .description("a description of what this timer does") // optional
+                .register(registry);
     }
 
     public String getSysInfoFullMap() {
@@ -146,7 +156,7 @@ class SysInfoBuilder {
         return pid;
     }
 
-    public void printBenchmarkMonitor(int pid) {
+    public void printBenchmarkMonitor(int pid, String monitorType) {
         try {
             //DecimalFormat df = new DecimalFormat("###.#");
 
@@ -174,8 +184,12 @@ class SysInfoBuilder {
                         timeDifference = currentTime - previousTime;
                         double singleCPU = 100d * (timeDifference / ((double) 1000));
                         double totalCPU = singleCPU / cpuNumber;
-                        System.out.println("Benchmark Total CPU: " + (int)totalCPU + "%");
-                        System.out.println("Benchmark Single CPU: " + (int)singleCPU + "%");
+                        timerc.record((long)singleCPU, TimeUnit.MILLISECONDS);
+                        System.out.println(monitorType + " Total CPU: " + (int)totalCPU + "%");
+                        System.out.println(monitorType + " Single CPU: " + (int)singleCPU + "%");
+                        System.out.println(monitorType + " MEAN Single CPU: " + (int)timerc.mean(TimeUnit.MILLISECONDS));
+
+
                         //System.out.println("Benchmark Bytes-read: " + process.getBytesRead());
                         //System.out.println("Benchmark Bytes-written: " + process.getBytesWritten());
 
