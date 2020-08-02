@@ -157,6 +157,10 @@ class SysInfoBuilder {
     }
 
     public void printBenchmarkMonitor(int pid, String monitorType) {
+        printBenchmarkMonitor(pid, monitorType, -1);
+    }
+    public void printBenchmarkMonitor(int pid, String monitorType, double benchmark) {
+        int cpu = -1;
         try {
             //DecimalFormat df = new DecimalFormat("###.#");
 
@@ -185,10 +189,20 @@ class SysInfoBuilder {
                         double singleCPU = 100d * (timeDifference / ((double) 1000));
                         double totalCPU = singleCPU / cpuNumber;
                         timerc.record((long)singleCPU, TimeUnit.MILLISECONDS);
+                        if(singleCPU > 100.0) {
+                            singleCPU = 100.0;
+                        }
                         System.out.println(monitorType + " Total CPU: " + (int)totalCPU + "%");
                         System.out.println(monitorType + " Single CPU: " + (int)singleCPU + "%");
                         System.out.println(monitorType + " MEAN Single CPU: " + (int)timerc.mean(TimeUnit.MILLISECONDS));
-
+                        if(benchmark != -1) {
+                            //System.out.println(benchmark);
+                            //System.out.println(singleCPU);
+                            double sutilm = benchmark * (timerc.mean(TimeUnit.MILLISECONDS)/100);
+                            double sutil = benchmark * (singleCPU/100);
+                            System.out.println(monitorType + " synthetic single CPU: " + (int)sutil);
+                            System.out.println(monitorType + " synthetic MEAN single CPU: " + (int)sutilm);
+                        }
 
                         //System.out.println("Benchmark Bytes-read: " + process.getBytesRead());
                         //System.out.println("Benchmark Bytes-written: " + process.getBytesWritten());
@@ -215,6 +229,7 @@ class SysInfoBuilder {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+
 
     }
 

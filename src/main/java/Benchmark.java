@@ -88,7 +88,7 @@ public class Benchmark {
             var10[5] = kernel.measureLU(var7, var1, var9);
             var10[0] = (var10[1] + var10[2] + var10[3] + var10[4] + var10[5]) / 5.0D;
 
-
+            bm = new BenchMetric("0",0,var10[0],var10[1],var10[2],var10[3],var10[4],var10[5]);
             //public BenchMetric(String INodeId, long runTime, double cpuComposite, double cpuFFT, double cpuSOR, double cpuMC, double cpuSM, double cpuLI, String javaVendor, String javaVersion, String osArch, String osName, String osVersion) {
             long runTime = (System.currentTimeMillis() - startTime)/1000;
             System.out.println("Benchmark time: " + runTime + " seconds.");
